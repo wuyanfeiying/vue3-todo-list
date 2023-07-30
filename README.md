@@ -1,4 +1,11 @@
+<!--
+ * @Date: 2023-07-26 20:36:09
+ * @LastEditors: wuyanfeiying
+-->
 # vue3-todo-list
+
+## vue3入门练习-todoList
+![图片描述](./src/assets/desc.png)
 
 ## Project setup
 ```
