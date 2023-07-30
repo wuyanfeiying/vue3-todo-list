@@ -23,7 +23,7 @@
           <div class="view">
             <input class="toggle" type="checkbox" >
             <label >{{todo.text}}</label>
-            <button class="destroy" ></button>
+            <button class="destroy" @click="remove(todo)" ></button>
           </div>
           <input
             class="edit"
@@ -79,13 +79,26 @@ const useAdd = todos => {
   }
 }
 
+// 2. 删除代办事项
+const useRemove = todos => {
+  const remove = todo => {
+    const index = todos.value.indexOf(todo)
+    todos.value.splice(index, 1)
+  }
+
+  return {
+    remove
+  }
+}
+
 export default {
   name: 'App',
   setup () {
     const todos = ref([])
-    return {
+    return {      
+      todos,
       ...useAdd(todos),
-      todos
+      ...useRemove(todos)
     }
   }
 }
