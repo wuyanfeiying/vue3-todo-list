@@ -1,38 +1,36 @@
 <!--
  * @Date: 2023-07-26 20:35:15
- * @LastEditors: chuhongguang
+ * @LastEditors: 
 -->
 <template>
   <section id="app" class="todoapp">
     <header class="header">
       <h1>todos</h1>
-      <input
-        class="new-todo"
-        placeholder="What needs to be done?"
-        autocomplete="off"
-        autofocus 
-        v-model="input"
-        @keyup.enter="addTodo"
-        >
+      <input class="new-todo" placeholder="What needs to be done?" autocomplete="off" autofocus v-model="input" @keyup.enter="addTodo">
     </header>
-    <section class="main" >
-      <input id="toggle-all" class="toggle-all"  type="checkbox">
+    <section class="main">
+      <input id="toggle-all" class="toggle-all" type="checkbox">
       <label for="toggle-all">Mark all as complete</label>
       <ul class="todo-list">
-        <li v-for="todo in todos" :key="todo.text">
+        <li v-for="todo in todos" :key="todo" :class="{ editing: todo === editingTodo }">
           <div class="view">
-            <input class="toggle" type="checkbox" >
-            <label >{{todo.text}}</label>
-            <button class="destroy" @click="remove(todo)" ></button>
+            <input class="toggle" type="checkbox">
+            <label @dblclick="editTodo(todo)">{{todo.text}}</label>
+            <button class="destroy" @click="remove(todo)"></button>
           </div>
-          <input
-            class="edit"
+          <input 
+            class="edit" 
             type="text"
+            v-editing-focus="todo === editingTodo"
+            v-model="todo.text"
+            @keyup.enter="doneEdit(todo)"
+            @blur="doneEdit(todo)"
+            @keyup.esc="cancelEdit(todo)"
             >
         </li>
       </ul>
     </section>
-    <footer class="footer" >
+    <footer class="footer">
       <span class="todo-count">
         <strong>1</strong>item left
       </span>
@@ -57,51 +55,88 @@
 </template>
 
 <script>
-import { ref } from 'vue'
-import './assets/index.css'
+import { ref } from "vue";
+import "./assets/index.css";
 
 // 1. 添加待办事项
-const useAdd = todos => {
-  const input = ref('')
+const useAdd = (todos) => {
+  const input = ref("");
   const addTodo = () => {
-    const text = input.value && input.value.trim()
-    if(text.length === 0) return
+    const text = input.value && input.value.trim();
+    if (text.length === 0) return;
     todos.value.unshift({
       text,
-      completed: false
-    })
-    input.value = ''
-  }
+      completed: false,
+    });
+    input.value = "";
+  };
 
   return {
     input,
-    addTodo
-  }
-}
+    addTodo,
+  };
+};
 
-// 2. 删除代办事项
-const useRemove = todos => {
-  const remove = todo => {
-    const index = todos.value.indexOf(todo)
-    todos.value.splice(index, 1)
-  }
+// 2. 删除待办事项
+const useRemove = (todos) => {
+  const remove = (todo) => {
+    const index = todos.value.indexOf(todo);
+    todos.value.splice(index, 1);
+  };
 
   return {
-    remove
-  }
-}
+    remove,
+  };
+};
+
+// 3. 编辑待办事项
+const useEdit = (remove) => {
+  let beforeEditingText = "";
+  const editingTodo = ref(null);
+  const editTodo = (todo) => {
+    beforeEditingText = todo.text;
+    editingTodo.value = todo;
+  };
+  const doneEdit = (todo) => {
+    if (!editingTodo.value) return;
+    todo.text = todo.text.trim();
+    todo.text || remove(todo);
+    editingTodo.value = null;
+  };
+  // 取消编辑
+  const cancelEdit = (todo) => {
+    editingTodo.value = null;
+    todo.text = beforeEditingText;
+  };
+
+  return {
+    editingTodo,
+    editTodo,
+    doneEdit,
+    cancelEdit,
+  };
+};
 
 export default {
-  name: 'App',
-  setup () {
-    const todos = ref([])
-    return {      
+  name: "App",
+  setup() {
+    const todos = ref([]);
+
+    const { remove } = useRemove(todos);
+    return {
       todos,
+      remove,
       ...useAdd(todos),
-      ...useRemove(todos)
+      ...useEdit(remove),
+    };
+  },
+
+  directives: {
+    editingFocus: (el, binding) => {
+      binding.value && el.focus()
     }
   }
-}
+};
 </script>
 
 <style>
