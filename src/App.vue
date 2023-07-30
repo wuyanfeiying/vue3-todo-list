@@ -1,6 +1,6 @@
 <!--
  * @Date: 2023-07-26 20:35:15
- * @LastEditors: 
+ * @LastEditors: chuhongguang
 -->
 <template>
   <section id="app" class="todoapp">
@@ -9,12 +9,15 @@
       <input class="new-todo" placeholder="What needs to be done?" autocomplete="off" autofocus v-model="input" @keyup.enter="addTodo">
     </header>
     <section class="main">
-      <input id="toggle-all" class="toggle-all" type="checkbox">
+      <input id="toggle-all" class="toggle-all" type="checkbox" v-model="allDone">
       <label for="toggle-all">Mark all as complete</label>
       <ul class="todo-list">
-        <li v-for="todo in todos" :key="todo" :class="{ editing: todo === editingTodo }">
+        <li v-for="todo in todos" 
+            :key="todo" 
+            :class="{ editing: todo === editingTodo, completed:todo.completed }"
+        >
           <div class="view">
-            <input class="toggle" type="checkbox">
+            <input class="toggle" type="checkbox" v-model="todo.completed">
             <label @dblclick="editTodo(todo)">{{todo.text}}</label>
             <button class="destroy" @click="remove(todo)"></button>
           </div>
@@ -55,7 +58,7 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import "./assets/index.css";
 
 // 1. 添加待办事项
@@ -117,6 +120,24 @@ const useEdit = (remove) => {
   };
 };
 
+// 切换待办项完成状态
+const useFilter = todos => {
+  const allDone = computed({
+    get(){
+      return !todos.value.filter(todo => !todo.completed).length
+    },
+    set(value) {
+      todos.value.forEach(todo => {
+        todo.completed = value
+      })
+    }
+  })
+
+  return {
+    allDone
+  }
+}
+
 export default {
   name: "App",
   setup() {
@@ -128,6 +149,7 @@ export default {
       remove,
       ...useAdd(todos),
       ...useEdit(remove),
+      ...useFilter(todos)
     };
   },
 
