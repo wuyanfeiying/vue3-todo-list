@@ -12,7 +12,7 @@
       <input id="toggle-all" class="toggle-all" type="checkbox" v-model="allDone">
       <label for="toggle-all">Mark all as complete</label>
       <ul class="todo-list">
-        <li v-for="todo in todos" 
+        <li v-for="todo in filteredTodos" 
             :key="todo" 
             :class="{ editing: todo === editingTodo, completed:todo.completed }"
         >
@@ -38,9 +38,9 @@
         <strong>1</strong>item left
       </span>
       <ul class="filters">
-        <li><a href="#/all">All</a></li>
-        <li><a href="#/active">Active</a></li>
-        <li><a href="#/completed">Completed</a></li>
+        <li><a href="#/all" >All</a></li>
+        <li><a href="#/active" >Active</a></li>
+        <li><a href="#/completed" >Completed</a></li>
       </ul>
       <button class="clear-completed">
         Clear completed
@@ -58,7 +58,7 @@
 </template>
 
 <script>
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import "./assets/index.css";
 
 // 1. 添加待办事项
@@ -120,8 +120,10 @@ const useEdit = (remove) => {
   };
 };
 
-// 切换待办项完成状态
+// 4. 切换待办项状态
 const useFilter = todos => {
+
+  // 切换待办项完成状态
   const allDone = computed({
     get(){
       return !todos.value.filter(todo => !todo.completed).length
@@ -133,8 +135,38 @@ const useFilter = todos => {
     }
   })
 
+  const filter = {
+    all: list => list,
+    active: list => list.filter(todo => !todo.completed),
+    completed: list => list.filter(todo => todo.completed)
+  }
+
+  const type = ref('all')
+  const filteredTodos = computed(() => filter[type.value](todos.value))
+  const onHashChange = () => {
+    const hash = window.location.hash.replace('#/', '')
+    console.log("🚀 ~ file: App.vue:148 ~ onHashChange ~ hash:", hash)
+    if(filter[hash]) {
+      type.value = hash
+    } else {
+      type.value = 'all'
+      window.location.hash = ''
+    }
+  }
+
+  onMounted(()=>{
+    // 点击超链接会触发 haschange注册的事件
+    window.addEventListener('hashchange', onHashChange)
+    onHashChange()
+  })
+
+
+  onUnmounted(()=>{
+    window.removeEventListener('hashchange', onHashChange)
+  })
   return {
-    allDone
+    allDone,
+    filteredTodos
   }
 }
 
