@@ -8,7 +8,7 @@
       <h1>todos</h1>
       <input class="new-todo" placeholder="What needs to be done?" autocomplete="off" autofocus v-model="input" @keyup.enter="addTodo">
     </header>
-    <section class="main">
+    <section v-show="count" class="main">
       <input id="toggle-all" class="toggle-all" type="checkbox" v-model="allDone">
       <label for="toggle-all">Mark all as complete</label>
       <ul class="todo-list">
@@ -33,16 +33,16 @@
         </li>
       </ul>
     </section>
-    <footer class="footer">
+    <footer v-show="count" class="footer">
       <span class="todo-count">
-        <strong>1</strong>item left
+        <strong>{{ remainingCount }}</strong>{{remainingCount>1?'items':'item'}} left
       </span>
       <ul class="filters">
         <li><a href="#/all" >All</a></li>
         <li><a href="#/active" >Active</a></li>
         <li><a href="#/completed" >Completed</a></li>
       </ul>
-      <button class="clear-completed">
+      <button v-show="count > remainingCount" class="clear-completed" @click="removeCompleted">
         Clear completed
       </button>
     </footer>
@@ -50,9 +50,9 @@
   <footer class="info">
     <p>Double-click to edit a todo</p>
     <!-- Remove the below line ↓ -->
-    <p>Template by <a href="http://sindresorhus.com">Sindre Sorhus</a></p>
+    <p>Template by <a href="#">Sindre Sorhus</a></p>
     <!-- Change this out with your name and url ↓ -->
-    <p>Created by <a href="https://www.lagou.com">教瘦</a></p>
+    <p>Created by <a href="#">XXX</a></p>
     <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
   </footer>
 </template>
@@ -87,8 +87,13 @@ const useRemove = (todos) => {
     todos.value.splice(index, 1);
   };
 
+  const removeCompleted = () => {
+    todos.value = todos.value.filter(todo => !todo.completed)
+  }
+
   return {
     remove,
+    removeCompleted
   };
 };
 
@@ -143,6 +148,12 @@ const useFilter = todos => {
 
   const type = ref('all')
   const filteredTodos = computed(() => filter[type.value](todos.value))
+  
+  // 未完成待办事项数量
+  const remainingCount = computed(() => filter.active(todos.value).length)
+
+  const count = computed(() => todos.value.length)
+
   const onHashChange = () => {
     const hash = window.location.hash.replace('#/', '')
     console.log("🚀 ~ file: App.vue:148 ~ onHashChange ~ hash:", hash)
@@ -165,8 +176,10 @@ const useFilter = todos => {
     window.removeEventListener('hashchange', onHashChange)
   })
   return {
+    count,
     allDone,
-    filteredTodos
+    filteredTodos,
+    remainingCount
   }
 }
 
@@ -175,10 +188,11 @@ export default {
   setup() {
     const todos = ref([]);
 
-    const { remove } = useRemove(todos);
+    const { remove, removeCompleted } = useRemove(todos);
     return {
       todos,
       remove,
+      removeCompleted,
       ...useAdd(todos),
       ...useEdit(remove),
       ...useFilter(todos)
